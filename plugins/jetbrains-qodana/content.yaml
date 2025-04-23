@@ -1,0 +1,76 @@
+title: Jetbrains Qodana
+author: hbahadorzadeh
+tags:
+  - Analysis
+  - Qodana
+  - Jetbrains
+logo: qodana.svg
+repo: https://github.com/JetBrains/qodana-docker
+image: https://hub.docker.com/r/jetbrains/
+license: Apache License 2.0
+readme: https://github.com/JetBrains/qodana-docker/blob/main/README.md
+description: |
+  A plugin to run JetBrains Qodana code analysis in a Drone pipeline.
+  There couple of images available for different languages, including Go, Java, PHP, Python, and Ruby.
+  here is the list of available images:
+  * [Qodana cpp](https://hub.docker.com/r/jetbrains/qodana-cpp): jetbrains/qodana-cpp:latest 
+  * [Qodana cdnet](https://hub.docker.com/r/jetbrains/qodana-cdnet): jetbrains/qodana-cdnet:latest 
+  * [Qodana dotnet](https://hub.docker.com/r/jetbrains/qodana-dotnet): jetbrains/qodana-dotnet:latest 
+  * [Qodana android](https://hub.docker.com/r/jetbrains/qodana-android): jetbrains/qodana-android:latest 
+  * [Qodana php](https://hub.docker.com/r/jetbrains/qodana-php): jetbrains/qodana-php:latest 
+  * [Qodana go](https://hub.docker.com/r/jetbrains/qodana-go): jetbrains/qodana-go:latest 
+  * [Qodana js](https://hub.docker.com/r/jetbrains/qodana-js): jetbrains/qodana-js:latest 
+  * [Qodana jvm-android](https://hub.docker.com/r/jetbrains/qodana-jvm-android): jetbrains/qodana-jvm-android:latest 
+  * [Qodana jvm-community](https://hub.docker.com/r/jetbrains/qodana-jvm-community): jetbrains/qodana-jvm-community:latest 
+  * [Qodana jvm](https://hub.docker.com/r/jetbrains/qodana-jvm): jetbrains/qodana-jvm:latest 
+  * [Qodana clang](https://hub.docker.com/r/jetbrains/qodana-clang): jetbrains/qodana-clang:latest 
+  * [Qodana python](https://hub.docker.com/r/jetbrains/qodana-python): jetbrains/qodana-python:latest 
+  * [Qodana python-community](https://hub.docker.com/r/jetbrains/qodana-python-community): jetbrains/qodana-python-community:latest
+example: |
+  kind: pipeline
+  name: Qodana analysis
+  
+  platform:
+    os: linux
+    arch: arm64
+  
+  clone:
+    skip_verify: true
+  
+  steps:
+    - name: run code analysis
+      pull: always
+      image: jetbrains/qodana-go:latest
+      settings:
+        qodana_token:
+          from_secret: qodana_token
+        args: --cache-dir /data/cache
+      commands:
+        - |
+          export QODANA_TOKEN=$PLUGIN_QODANA_TOKEN
+          export QODANA_REMOTE_URL=$DRONE_REPO_LINK
+          export QODANA_BRANCH=$DRONE_COMMIT_BRANCH
+          export QODANA_REVISION=$DRONE_COMMIT_SHA
+          export QODANA_JOB_URL=$DRONE_BUILD_LINK
+        - /opt/idea/bin/qodana scan -r report $PLUGIN_ARGS
+      volumes:
+        - name: cache
+          path: /data/cache
+  volumes:
+    - name: cache
+      host:
+        path: /var/lib/drone/cache/qodana
+
+properties:
+  qodana_token:
+    type: string
+    defaultValue: ""
+    description: qodana cloud token for the project
+    secret: true
+    required: false
+  args:
+    type: string
+    defaultValue: ""
+    description: args for qodana-cli
+    secret: false
+    required: false
